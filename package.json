@@ -9,6 +9,7 @@
   "author": "Cole Anam, Pui Yee Ng",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "save": "^2.9.0"
   }
 }
