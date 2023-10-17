@@ -1,16 +1,21 @@
-const http = require('http');
+let SERVER_NAME = 'patient-data-api'
+let PORT = 3000;
+let HOST = '127.9.9.1';
 
-const hostname = '127.0.0.1';
-const port = 3000;
+let errors = require('restify-errors');
+let restify = require('restify')
 
-const server = http.createServer((req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello World');
-});
+, patientSave = require('save')('patients')
 
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
-});
+, server = restify.createServer({name: SERVER_NAME})
 
-// Test new branch
+server.listen(PORT, HOST, function () {
+    console.log('Server %s listening at %s', server.name, server.url)
+    console.log('**** Resources: ****')
+    console.log('********************')
+    console.log(' /patients')
+    console.log(' /patients/:id')  
+})
+
+server.use(restify.plugins.fullResponse());
+server.use(restify.plugins.bodyParser());
