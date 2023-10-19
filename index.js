@@ -2,10 +2,43 @@ let SERVER_NAME = 'patient-data-api'
 let PORT = 3000;
 let HOST = '127.0.0.1';
 
+const mongoose = require ("mongoose");
+const username = "group7_admin";
+const password = "8kWON0SkJDJSDg9e";
+const dbname = "mapd713_group7_db";
+
+// Atlas MongoDb connection string format
+let uristring = 'mongodb+srv://'+username+':'+password+'@cluster0.w4uxyix.mongodb.net/'+dbname+
+ '?retryWrites=true&w=majority';
+ console.log(uristring)
+
+// Makes db connection asynchronously
+mongoose.connect(uristring, {useNewUrlParser: true});
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', ()=>{
+  // we're connected!
+  console.log("!!!! Connected to db: " + uristring)
+});
+
+// Define patient collection schema
+const patientSchema = new mongoose.Schema({
+    first_name: String, 
+    last_name: String,
+    address: String, 
+    date_of_birth: String,
+    gender: String, 
+    department: String,
+    gender: String, 
+    department: Array
+});
+
+// Compiles the schema into a model, opening (or creating, if
+// nonexistent) the 'Patient' collection in the MongoDB database
+let PatientsModel = mongoose.model('Patients', patientSchema);
+
 let errors = require('restify-errors');
 let restify = require('restify')
-
-, patientSave = require('save')('patients')
 
 , server = restify.createServer({name: SERVER_NAME})
 
@@ -25,11 +58,18 @@ server.use(restify.plugins.bodyParser());
 server.get('/patients', function (req, res, next) {
     console.log('GET /patients params=>' + JSON.stringify(req.params));
 
-    // Find every entity within the given collection
-    patientSave.find({}, function (error,patients) {
-        // Return all patients in the system
-        res.send(patients)
+
+  // Find every entity in db
+    PatientsModel.find({})
+    .then((patients)=>{
+        // Return all of the patients in the system
+        res.send(patients);
+        return next();
     })
+    .catch((error)=>{
+        return next(new Error(JSON.stringify(error.errors)));
+    });
+
 })
 
 // Use Case View Specific Patient Info
@@ -37,21 +77,24 @@ server.get('/patients', function (req, res, next) {
 server.get('/patients/:id', function (req, res, next) {
     console.log('GET /patients/:id params=>' + JSON.stringify(req.params));
 
-    // Find a patient by their id within save
-    patientSave.findOne({_id: req.params.id }, function (error, patient) {
-
-        // If there are any error, pass them to next in the correct format
-        if (error) return next(new Error(JSON.stringify(error.errors)))
-
-        if (patient) {
-            // Send patient if no issues
-            res.send(patient)
-        }
-        else {
-            // Send 404 header if the user doesn't exist
-            res.send(404)
-        }
+  // Find a single patient by their id in db
+  PatientsModel.findOne({ _id: req.params.id })
+    .then((patient)=>{
+      console.log("found patient: " + patient);
+      if (patient) {
+        // Send the patient if no issues
+        res.send(patient)
+      } else {
+        // Send 404 header if the patient doesn't exist
+        res.send(404)
+      }
+      return next();
     })
+    .catch((error)=>{
+        console.log("error: " + error);
+        return next(new Error(JSON.stringify(error.errors)));
+    });
+
 })
 
 // Use Case Add Patient Info
@@ -90,7 +133,7 @@ server.post('/patients', function (req, res, next) {
         return next(new errors.BadRequestError('doctor must be supplied'))
     }
 
-    let newPatient = {
+    let newPatient = new PatientsModel({
         first_name: req.body.first_name,
         last_name: req.body.last_name,
         address: req.body.address,
@@ -99,14 +142,18 @@ server.post('/patients', function (req, res, next) {
         department: req.body.department,
         doctor: req.body.doctor,
         clinical_data: [{}]
-    }
-
-    // Create new patient using the persistence engine
-    patientSave.create(newPatient, function (error, patient) {
-        // If there are any errors, pass them to next in the correct format
-        if (error) return next(new Error(JSON.stringify(error.errors)))
-
-        // Send the patient if no issues
-        res.send(201, patient)
     })
+
+    // Create the patient and save to db
+    newPatient.save()
+  .then((patient)=> {
+    console.log("saved user: " + patient);
+    // Send the user if no issues
+    res.send(201, patient);
+    return next();
+  })
+  .catch((error)=>{
+    console.log("error: " + error);
+    return next(new Error(JSON.stringify(error.errors)));
+});
 })
