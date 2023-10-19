@@ -26,11 +26,11 @@ const patientSchema = new mongoose.Schema({
     first_name: String, 
     last_name: String,
     address: String, 
-    date_of_birth: String,
+    date_of_birth: Date,
     gender: String, 
     department: String,
-    gender: String, 
-    department: Array
+    doctor: String, 
+    clinical_data: Array,
 });
 
 // Compiles the schema into a model, opening (or creating, if
