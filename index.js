@@ -30,6 +30,7 @@ const patientSchema = new mongoose.Schema({
     gender: String, 
     department: String,
     doctor: String, 
+    additional_notes: String,
     clinical_data: Array,
 });
 
@@ -141,6 +142,7 @@ server.post('/patients', function (req, res, next) {
         gender: req.body.gender,
         department: req.body.department,
         doctor: req.body.doctor,
+        additional_notes: req.body.additional_notes,
         clinical_data: [{}]
     })
 
