@@ -149,8 +149,8 @@ server.post('/patients', function (req, res, next) {
     // Create the patient and save to db
     newPatient.save()
   .then((patient)=> {
-    console.log("saved user: " + patient);
-    // Send the user if no issues
+    console.log("saved patient: " + patient);
+    // Send the patient if no issues
     res.send(201, patient);
     return next();
   })
@@ -158,4 +158,37 @@ server.post('/patients', function (req, res, next) {
     console.log("error: " + error);
     return next(new Error(JSON.stringify(error.errors)));
 });
+})
+
+// Use Case Edit Patients’ Basic Information
+// Edit one patients' record
+// Update a patient by their id
+server.put('/patients/:id', async (req, res) => {
+  console.log('POST /patients params=>' + JSON.stringify(req.params));
+  console.log('POST /patients body=>' + JSON.stringify(req.body));
+
+  try {
+    const patientId = req.params.id;
+    const updatedData = req.body
+
+    // Find the patient by ID and update the data
+    const updatedPatient = await PatientsModel.findOneAndUpdate(
+      { _id: patientId },
+      { $set: updatedData },
+      { new: true }
+    )
+
+    if (!updatedPatient) {
+      res.send(400)
+      return next(new Error('Patient not found'));
+    }
+
+    // Return the updated patient as the response
+    res.send(200, updatedPatient);
+  } catch (error) {
+    // Handle any errors that occur during the update process
+    res.send(500)
+    console.log("error: " + error);
+    return next(new Error(JSON.stringify(error.errors)));
+  }
 })
