@@ -30,7 +30,8 @@ const patientSchema = new mongoose.Schema({
     gender: String, 
     department: String,
     doctor: String, 
-    clinical_data: Array,
+    additional_notes: String,
+    condition: String,
 });
 
 // Compiles the schema into a model, opening (or creating, if
@@ -141,7 +142,8 @@ server.post('/patients', function (req, res, next) {
         gender: req.body.gender,
         department: req.body.department,
         doctor: req.body.doctor,
-        clinical_data: [{}]
+        additional_notes: req.body.additional_notes,
+        condition: ""
     })
 
     // Create the patient and save to db
