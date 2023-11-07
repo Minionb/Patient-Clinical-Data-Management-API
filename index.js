@@ -9,8 +9,8 @@ const dbname = "mapd713_group7_db";
 
 // Atlas MongoDb connection string format
 let uristring = 'mongodb+srv://'+username+':'+password+'@cluster0.w4uxyix.mongodb.net/'+dbname+
- '?retryWrites=true&w=majority';
- console.log(uristring)
+'?retryWrites=true&w=majority';
+console.log(uristring)
 
 // Makes db connection asynchronously
 mongoose.connect(uristring, {useNewUrlParser: true});
