@@ -32,12 +32,13 @@ const patientSchema = new mongoose.Schema({
     doctor: String, 
     additional_notes: String,
     condition: String,
+    test_data: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TestData' }]
 });
 
 // Compiles the schema into a model, opening (or creating, if
 // nonexistent) the 'Patient' collection in the MongoDB database
 let PatientsModel = mongoose.model('Patients', patientSchema);
-
+const TestData = require('./TestDataSchema');
 let errors = require('restify-errors');
 let restify = require('restify')
 
@@ -48,7 +49,10 @@ server.listen(PORT, HOST, function () {
     console.log('**** Resources: ****')
     console.log('********************')
     console.log(' /patients')
-    console.log(' /patients/:id')  
+    console.log(' /patients/:id')
+    console.log(' /patients/testdata')
+    console.log(' /patients/:id/testdata')
+    console.log(' /patients/testdata/:id')
 })
 
 server.use(restify.plugins.fullResponse());
@@ -58,7 +62,6 @@ server.use(restify.plugins.bodyParser());
 // Get all patients in the system
 server.get('/patients', function (req, res, next) {
     console.log('GET /patients params=>' + JSON.stringify(req.params));
-
 
   // Find every entity in db
     PatientsModel.find({})
@@ -143,19 +146,114 @@ server.post('/patients', function (req, res, next) {
         department: req.body.department,
         doctor: req.body.doctor,
         additional_notes: req.body.additional_notes,
-        condition: ""
+        condition: "",
     })
 
     // Create the patient and save to db
     newPatient.save()
-  .then((patient)=> {
-    console.log("saved user: " + patient);
-    // Send the user if no issues
-    res.send(201, patient);
+    .then((patient)=> {
+      console.log("saved user: " + patient);
+      // Send the user if no issues
+      res.send(201, patient);
+      return next();
+    })
+    .catch((error)=>{
+      console.log("error: " + error);
+      return next(new Error(JSON.stringify(error.errors)));
+  });
+})
+
+// Test Data Use Cases
+// Create new Test Data
+server.post('/patients/testdata', function (req, res, next) {
+  console.log('POST /patients params=>' + JSON.stringify(req.params));
+  console.log('POST /patients body=>' + JSON.stringify(req.body));
+
+  let newTestData = new TestData({
+    patient_id: req.body.patient_id,
+    date_time: req.body.date_time,
+    data_type: req.body.data_type,
+    reading_value: req.body.reading_value,
+  })
+
+  // Create the testdata and save to db
+  newTestData.save()
+  .then((testdata)=> {
+    console.log("saved test data: " + testdata);
+    // Send the testdata if no issues
+    res.send(201, testdata);
     return next();
   })
   .catch((error)=>{
     console.log("error: " + error);
     return next(new Error(JSON.stringify(error.errors)));
-});
+  });
+})
+
+// Get all Test Data for a specific patient
+server.get('/patients/:id/testdata', function(req, res, next) {
+  console.log('GET /patients/:id/testdata params=>' + JSON.stringify(req.params));
+
+  TestData.find({ patient_id: req.params.id })
+  .then((testdata)=>{
+    console.log("found test data for patient: " + testdata);
+    if (testdata) {
+      // Send the testdatas if no issues
+      res.send(testdata)
+    } else {
+      // Send 404 header if the patient doesn't exist
+      res.send(404)
+    }
+    return next();
+  })
+  .catch((error)=>{
+      console.log("error: " + error);
+      return next(new Error(JSON.stringify(error.errors)));
+  });
+})
+
+// Update Test Data by id
+server.patch('/patients/testdata/:id', function(req, res, next) {
+  console.log('PATCH /patients/testdata/:id params=>' + JSON.stringify(req.params));
+  
+  const updateDoc = async (id) => {
+    try {
+      const testDataUp = await TestData.findByIdAndUpdate(id, {
+        patient_id: req.body.patient_id,
+        date_time: req.body.date_time,
+        data_type: req.body.data_type,
+        reading_value: req.body.reading_value,
+      }, { new: true });
+
+      if (!testDataUp) {
+        return res.send(404, 'Test Data not found');
+      }
+    
+      console.log("Updated test data to " + testDataUp)
+      res.send(testDataUp);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  updateDoc(req.params.id)
+})
+
+// Delete Test Data by id
+server.del('/patients/testdata/:id', function(req, res, next) {
+  console.log('DELETE /patients/testdata/:id params=>' + JSON.stringify(req.params));
+
+  const deleteDoc = async (id) => {
+    try {
+      const testDataDel = await TestData.findByIdAndDelete(id);
+
+      if (!testDataDel) {
+        return res.send(404, 'Test Data Deleted');
+      }
+      console.log("Deleted test data")
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  deleteDoc(req.params.id)
 })
