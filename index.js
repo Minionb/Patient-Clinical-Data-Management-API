@@ -196,6 +196,23 @@ server.put('/patients/:id', async (req, res) => {
   }
 })
 
+// View Patients with Critical Condition
+server.get('/patients/critical', function (req, res, next) {
+  console.log('GET /patients params=>' + JSON.stringify(req.params));
+
+// Find every entity with critical condition in db
+  PatientsModel.find({ condition: "critical" })
+  .then((patients)=>{
+      // Return all of the patients with critical condition in the system
+      res.send(patients);
+      return next();
+  })
+  .catch((error)=>{
+      return next(new Error(JSON.stringify(error.errors)));
+  });
+
+})
+
 // Test Data Use Cases
 // Create new Test Data
 server.post('/patients/testdata', function (req, res, next) {
