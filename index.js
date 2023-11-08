@@ -232,6 +232,27 @@ server.get('/patients/critical', function (req, res, next) {
 
 })
 
+// Use Case: Delete Specific Patient’s Basic Information Record and All of its Respective Clinical Data
+// Delete Specific Patient by ID
+server.del('/patients/:id', function (req, res, next) {
+  console.log('POST /patients params=>' + JSON.stringify(req.params));
+  // Delete the patient in db
+  PatientsModel.findOneAndDelete({ _id: req.params.id })
+    .then((deletePatient)=>{      
+      console.log("deleted patient: " + deletePatient);
+      if(deletePatient){
+        res.send(200, deletePatient);
+      } else {
+        res.send(404, "Patient not found");
+      }      
+      return next();
+    })
+    .catch((error)=>{
+      console.log("error: " + error);
+      return next(new Error(JSON.stringify(error.errors)));
+    });
+})
+
 // Test Data Use Cases
 // Create new Test Data
 server.post('/patients/testdata', function (req, res, next) {
@@ -280,6 +301,26 @@ server.get('/patients/:id/testdata', function(req, res, next) {
       return next(new Error(JSON.stringify(error.errors)));
   });
 })
+
+// Use Case: Delete Specific Patient’s Basic Information Record and All of its Respective Clinical Data
+// Delete all Test Data for a specific patient
+server.del('/patients/:id/testdata', function(req, res, next) {
+  console.log('DELETE /patients/:id/testdata params=>' + JSON.stringify(req.params));
+
+  TestData.deleteMany({ patient_id: req.params.id })
+  .then((deletedTestData)=>{      
+    console.log("deleted Test Data: " + deletedTestData);
+    if(deletedTestData){
+      res.send(200, deletedTestData);
+    }     
+    return next();
+  })
+  .catch(()=>{
+    console.log("error: " + error);
+    return next(new Error(JSON.stringify(error.errors)));
+  });
+})
+
 
 // Update Test Data by id
 server.patch('/patients/testdata/:id', function(req, res, next) {
