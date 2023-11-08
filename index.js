@@ -247,7 +247,7 @@ server.del('/patients/:id', function (req, res, next) {
     .then((deletePatient)=>{      
       console.log("deleted patient: " + deletePatient);
       if(deletePatient){
-        res.send(200, deletePatient);
+        res.send(200, "deleted patient with id: " + req.params.id);
       } else {
         res.send(404, "Patient not found");
       }      
@@ -370,6 +370,7 @@ server.del('/patients/testdata/:id', function(req, res, next) {
         return res.send(404, 'Test Data Deleted');
       }
       console.log("Deleted test data")
+      res.send(200, "Deleted test data with id: " + id);
     } catch (error) {
       console.log(error);
     }
