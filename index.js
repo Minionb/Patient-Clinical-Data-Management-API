@@ -185,34 +185,40 @@ server.post('/patients', function (req, res, next) {
 // Use Case Edit Patients’ Basic Information
 // Edit one patients' record
 // Update a patient by their id
-server.put('/patients/:id', async (req, res) => {
-  console.log('POST /patients params=>' + JSON.stringify(req.params));
-  console.log('POST /patients body=>' + JSON.stringify(req.body));
+server.patch('/patients/:id', function (req, res, next) {
+  console.log('Patch /patients params=>' + JSON.stringify(req.params));
+  console.log('Patch /patients body=>' + JSON.stringify(req.body));
+
+  const patientId = req.params.id;
+  const updatedData = req.body
+
+  const updatedPatient = async () =>{
 
   try {
-    const patientId = req.params.id;
-    const updatedData = req.body
-
     // Find the patient by ID and update the data
-    const updatedPatient = await PatientsModel.findOneAndUpdate(
+    
+      const updatedPatientData = await PatientsModel.findOneAndUpdate(
       { _id: patientId },
       { $set: updatedData },
       { new: true }
     )
 
-    if (!updatedPatient) {
+    if (!updatedPatientData) {
       res.send(400)
       return next(new Error('Patient not found'));
     }
 
     // Return the updated patient as the response
-    res.send(200, updatedPatient);
-  } catch (error) {
+    res.send(200, updatedPatientData);
+  }
+  catch (error) {
     // Handle any errors that occur during the update process
     res.send(500)
     console.log("error: " + error);
     return next(new Error(JSON.stringify(error.errors)));
   }
+}
+  updatedPatient()
 })
 
 // View Patients with Critical Condition
@@ -326,14 +332,17 @@ server.del('/patients/:id/testdata', function(req, res, next) {
 server.patch('/patients/testdata/:id', function(req, res, next) {
   console.log('PATCH /patients/testdata/:id params=>' + JSON.stringify(req.params));
   
-  const updateDoc = async (id) => {
+  const updatedData = req.body
+  console.log(req.body)
+  const testDateID = req.params.id
+  
+  const updateDoc = async () => {
     try {
-      const testDataUp = await TestData.findByIdAndUpdate(id, {
-        patient_id: req.body.patient_id,
-        date_time: req.body.date_time,
-        data_type: req.body.data_type,
-        reading_value: req.body.reading_value,
-      }, { new: true });
+      const testDataUp = await TestData.findByIdAndUpdate(
+        { _id: testDateID },
+        { $set: updatedData },
+        { new: true }
+        );
 
       if (!testDataUp) {
         return res.send(404, 'Test Data not found');
@@ -346,7 +355,7 @@ server.patch('/patients/testdata/:id', function(req, res, next) {
     }
   }
 
-  updateDoc(req.params.id)
+  updateDoc()
 })
 
 // Delete Test Data by id
