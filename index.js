@@ -1,5 +1,5 @@
 let SERVER_NAME = 'patient-data-api'
-let PORT = 3000;
+let PORT = process.env.PORT || 3000;
 let HOST = '127.0.0.1';
 
 const mongoose = require ("mongoose");
@@ -44,7 +44,7 @@ let restify = require('restify')
 
 , server = restify.createServer({name: SERVER_NAME})
 
-server.listen(PORT, HOST, function () {
+server.listen(PORT, function () {
     console.log('Server %s listening at %s', server.name, server.url)
     console.log('**** Resources: ****')
     console.log('********************')

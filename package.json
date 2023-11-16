@@ -1,10 +1,14 @@
 {
-  "name": "mapd713-project-group7",
-  "version": "1.0.0",
-  "description": "MAPD713-Project-Group7",
+  "name": "mapd713-project-group7-render",
+  "version": "1.3.0",
+  "description": "Rest API - Patients, configured to be deployed on render.con platform",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=2.1.x"
   },
   "author": "Cole Anam, Pui Yee Ng",
   "license": "ISC",
