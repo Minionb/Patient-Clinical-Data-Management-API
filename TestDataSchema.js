@@ -6,6 +6,7 @@ const dataSchema = new mongoose.Schema({
     date_time: Date,
     data_type: String,
     reading_value: String,
+    condition: String,
 });
 
 // Compiles the schema into a model, opening (or creating, if

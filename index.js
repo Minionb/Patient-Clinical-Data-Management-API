@@ -32,7 +32,6 @@ const patientSchema = new mongoose.Schema({
     doctor: String, 
     additional_notes: String,
     condition: String,
-    test_data: [{ type: mongoose.Schema.Types.ObjectId, ref: 'TestData' }]
 });
 
 // Compiles the schema into a model, opening (or creating, if
@@ -186,8 +185,8 @@ server.post('/patients', function (req, res, next) {
 // Edit one patients' record
 // Update a patient by their id
 server.patch('/patients/:id', function (req, res, next) {
-  console.log('Patch /patients params=>' + JSON.stringify(req.params));
-  console.log('Patch /patients body=>' + JSON.stringify(req.body));
+  console.log('PATCH /patients params=>' + JSON.stringify(req.params));
+  console.log('PATCH /patients body=>' + JSON.stringify(req.body));
 
   const patientId = req.params.id;
   const updatedData = req.body
@@ -241,7 +240,7 @@ server.get('/patients/critical', function (req, res, next) {
 // Use Case: Delete Specific Patient’s Basic Information Record and All of its Respective Clinical Data
 // Delete Specific Patient by ID
 server.del('/patients/:id', function (req, res, next) {
-  console.log('POST /patients params=>' + JSON.stringify(req.params));
+  console.log('DELETE /patients params=>' + JSON.stringify(req.params));
   // Delete the patient in db
   PatientsModel.findOneAndDelete({ _id: req.params.id })
     .then((deletePatient)=>{      
@@ -270,6 +269,7 @@ server.post('/patients/testdata', function (req, res, next) {
     date_time: req.body.date_time,
     data_type: req.body.data_type,
     reading_value: req.body.reading_value,
+    condition: ""
   })
 
   // Create the testdata and save to db
