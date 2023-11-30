@@ -59,13 +59,14 @@ server.use(restify.plugins.bodyParser());
 // Add query parser middleware
 server.use(restify.plugins.queryParser());
 
-// Use Case List all Patients Info and Filter Patient by first name & last name
+// Use Case List all Patients Info and Filter Patient by first name & last name or condition
 // Get all patients or by filter in the system
 server.get('/patients', function (req, res, next) {
     console.log('GET /patients params=>' + JSON.stringify(req.params));
 
     const first_name = req.query.first_name
     const last_name = req.query.last_name
+    const condition = req.query.condition
 
   // Prepare the filter object
   const filter = {};
@@ -79,6 +80,12 @@ server.get('/patients', function (req, res, next) {
     // Filter by last name if provided
     filter.last_name = last_name; 
   }
+
+  if (condition) {
+    // Filter by condition if provided
+    filter.condition = condition; 
+  }
+
   console.log(filter)
 
   // Find every entity or filtered entity in db 
