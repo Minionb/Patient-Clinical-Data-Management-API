@@ -245,25 +245,32 @@ server.get('/patients/critical', function (req, res, next) {
 })
 
 // Use Case: Delete Specific Patient’s Basic Information Record and All of its Respective Clinical Data
-// Delete Specific Patient by ID
+// Delete Specific Patient by ID and the relative test data
 server.del('/patients/:id', function (req, res, next) {
   console.log('DELETE /patients params=>' + JSON.stringify(req.params));
-  // Delete the patient in db
-  PatientsModel.findOneAndDelete({ _id: req.params.id })
-    .then((deletePatient)=>{      
-      console.log("deleted patient: " + deletePatient);
-      if(deletePatient){
-        res.send(200, "deleted patient with id: " + req.params.id);
+
+  Promise.all([
+    PatientsModel.findOneAndDelete({ _id: req.params.id }),
+    TestData.deleteMany({ patient_id: req.params.id })
+  ])
+    .then(([deletedPatient, deletedTestData]) => {
+      console.log("deleted patient: " + deletedPatient);
+      console.log("deleted test data: " + deletedTestData);
+
+      if (deletedPatient) {
+        res.send(200, "Deleted patient with id: " + req.params.id + " and the relative test data." );
       } else {
-        res.send(404, "Patient not found");
-      }      
-      return next();
+        res.send(404,"Patient not found");
+      }
     })
-    .catch((error)=>{
+    .catch((error) => {
       console.log("error: " + error);
-      return next(new Error(JSON.stringify(error.errors)));
+      res.send(500, "Error deleting patient and the relative test data: " + error.message);
+    })
+    .finally(() => {
+      return next();
     });
-})
+});
 
 // Test Data Use Cases
 // Create new Test Data
@@ -317,22 +324,22 @@ server.get('/patients/:id/testdata', function(req, res, next) {
 
 // Use Case: Delete Specific Patient’s Basic Information Record and All of its Respective Clinical Data
 // Delete all Test Data for a specific patient
-server.del('/patients/:id/testdata', function(req, res, next) {
-  console.log('DELETE /patients/:id/testdata params=>' + JSON.stringify(req.params));
+// server.del('/patients/:id/testdata', function(req, res, next) {
+//   console.log('DELETE /patients/:id/testdata params=>' + JSON.stringify(req.params));
 
-  TestData.deleteMany({ patient_id: req.params.id })
-  .then((deletedTestData)=>{      
-    console.log("deleted Test Data: " + deletedTestData);
-    if(deletedTestData){
-      res.send(200, deletedTestData);
-    }     
-    return next();
-  })
-  .catch(()=>{
-    console.log("error: " + error);
-    return next(new Error(JSON.stringify(error.errors)));
-  });
-})
+//   TestData.deleteMany({ patient_id: req.params.id })
+//   .then((deletedTestData)=>{      
+//     console.log("deleted Test Data: " + deletedTestData);
+//     if(deletedTestData){
+//       res.send(200, deletedTestData);
+//     }     
+//     return next();
+//   })
+//   .catch(()=>{
+//     console.log("error: " + error);
+//     return next(new Error(JSON.stringify(error.errors)));
+//   });
+// })
 
 
 // Update Test Data by id
