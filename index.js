@@ -21,22 +21,9 @@ db.once('open', ()=>{
   console.log("!!!! Connected to db: " + uristring)
 });
 
-// Define patient collection schema
-const patientSchema = new mongoose.Schema({
-    first_name: String, 
-    last_name: String,
-    address: String, 
-    date_of_birth: Date,
-    gender: String, 
-    department: String,
-    doctor: String, 
-    additional_notes: String,
-    condition: String,
-});
-
 // Compiles the schema into a model, opening (or creating, if
 // nonexistent) the 'Patient' collection in the MongoDB database
-let PatientsModel = mongoose.model('Patients', patientSchema);
+const PatientsModel = require('./PatientSchema');
 const TestData = require('./TestDataSchema');
 let errors = require('restify-errors');
 let restify = require('restify')
