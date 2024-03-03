@@ -458,24 +458,155 @@ server.patch('/patients/testdata/:id', function(req, res, next) {
   
   const updatedData = req.body
   console.log(req.body)
-  const testDateID = req.params.id
+  const testDataID = req.params.id
+
+  let condition;
+
+  switch (req.body.data_type) {
+    case 'Blood Pressure':
+      var bloodPressure = req.body.reading_value.split("/");
+      bloodPressure[1] = bloodPressure[1].split(" ")[0];
+      bloodPressure[0] = parseInt(bloodPressure[0], 10);
+      bloodPressure[1] = parseInt(bloodPressure[1], 10);
+
+      if (bloodPressure[0] >= 180 || bloodPressure[1] >= 120) {
+        condition = "critical";
+      } else if (bloodPressure[0] >= 140 || bloodPressure[1] >= 90) {
+        condition = "bad";
+      } else if (140 > bloodPressure[0] && bloodPressure[0] >= 130 && 90 > bloodPressure[1] && bloodPressure[1] >= 80) {
+        condition = "average";
+      } else if (130 > bloodPressure[0] && bloodPressure[0] >= 120 && bloodPressure[1] > 80) {
+        condition = "fine";
+      } else {
+        condition = "good";
+      }
+      break;
+  
+    case 'Respiratory Rate':
+      var respiratoryRate = req.body.reading_value.split("/");
+      respiratoryRate = parseInt(respiratoryRate[0]);
+
+      if (respiratoryRate > 24) {
+        condition = "critical";
+      } else if (respiratoryRate > 20) {
+        condition = "average";
+      } else if (20 >= respiratoryRate && respiratoryRate >= 12) {
+        condition = "good";
+      }
+      break;
+  
+    case 'Blood Oxygen Level':
+      var bloodOxygenLevel = req.body.reading_value.split(" ");
+      bloodOxygenLevel = parseInt(bloodOxygenLevel[0]);
+
+      if (bloodOxygenLevel <= 67) {
+        condition = "critical";
+      } else if (bloodOxygenLevel <= 85) {
+        condition = "bad";
+      } else if (bloodOxygenLevel <= 90) {
+        condition = "average";
+      } else if (bloodOxygenLevel <= 95) {
+        condition = "fine";
+      } else {
+        condition = "good";
+      }
+      break;
+  
+    case 'Heartbeat Rate':
+      var bpm = req.body.reading_value.split(" ");
+      bpm = parseInt(bpm[0]);
+      
+      if (48 <= bpm && bpm <= 61) {
+        condition = "good";
+      } else if (62 <= bpm && bpm <= 69) {
+        condition = "fine";
+      } else if (70 <= bpm && bpm <= 73) {
+        condition = "average";
+      } else if (74 <= bpm && bpm <= 79) {
+        condition = "bad";
+      } else if (80 <= bpm) {
+        condition = "critical";
+      }
+      break;
+  
+    default:
+      // Handle the default case if needed
+      break;
+  }
+
+  updatedData.condition = condition
+
   
   const updateDoc = async () => {
     try {
       const testDataUp = await TestData.findByIdAndUpdate(
-        { _id: testDateID },
+        { _id: testDataID },
         { $set: updatedData },
         { new: true }
-        );
-
+      );
+  
       if (!testDataUp) {
-        return res.send(404, 'Test Data not found');
+        return res.status(404).send('Test Data not found');
       }
     
-      console.log("Updated test data to " + testDataUp)
-      res.send(testDataUp);
+      console.log("Updated test data to " + testDataUp);
+  
+      return TestData.updateMany({ patient_id: req.body.patient_id, data_type: req.body.data_type }, { $set: { isLatest: false } })
+        .then(() => {
+          // Find the latest record and update isLatest to true
+          return TestData.findOneAndUpdate(
+            {  patient_id: req.body.patient_id, data_type: req.body.data_type },
+            { $set: { isLatest: true } },
+            { sort: { date_time: -1 } }
+          )
+            .then((updatedRecord) => {
+              if (updatedRecord) {
+                console.log('Latest record updated:', updatedRecord);
+              } else {
+                console.log('No records found');
+              }
+              // Continue to the next operation
+              return TestData.find({ patient_id: req.body.patient_id, isLatest: true });
+            })
+        })
+        .then((records) => {
+          let patientCondition = ""; // Assume initial condition is ""
+      
+          // Iterate over the records and compare conditions
+          records.forEach((record) => {
+            console.log(record);
+            if (record.condition === "critical") {
+              patientCondition = "critical";
+            } else if (record.condition === "bad" && patientCondition !== "critical") {
+              patientCondition = "bad";
+            } else if (record.condition === "average" && patientCondition !== "critical" && patientCondition !== "bad") {
+              patientCondition = "average";
+            } else if (record.condition === "fine" && patientCondition !== "critical" && patientCondition !== "bad" && patientCondition !== "average") {
+              patientCondition = "fine";
+            } else if (record.condition === "good" && patientCondition !== "critical" && patientCondition !== "bad" && patientCondition !== "average" && patientCondition !== "fine") {
+              patientCondition = "good";
+            }
+          });
+      
+          console.log("Patient condition: " + patientCondition);
+      
+          // Update the patient's condition in the patientSchema
+          return PatientsModel.findOneAndUpdate(
+            { _id: req.body.patient_id }, 
+            { condition: patientCondition }, 
+            { new: true });
+        })
+        .then((updatedPatient) => {
+          console.log("Patient condition updated successfully: " + updatedPatient.condition);
+          res.send(201,testDataUp)
+        })
+        .catch((error) => {
+          console.error(error);
+          res.send(500,'Internal Server Error');
+        });
     } catch (error) {
       console.log(error);
+      res.send(500,'Internal Server Error');
     }
   }
 
