@@ -625,10 +625,62 @@ server.del('/patients/testdata/:id', function(req, res, next) {
         return res.send(404, 'Test Data Deleted');
       }
       console.log("Deleted test data")
-      res.send(200, "Deleted test data with id: " + id);
-    } catch (error) {
-      console.log(error);
+  // Update the isLatest field for the remaining records
+  await TestData.updateMany(
+    { patient_id: testDataDel.patient_id, data_type: testDataDel.data_type },
+    { $set: { isLatest: false } }
+  );
+
+  // Find the latest record and update isLatest to true
+  const updatedRecord = await TestData.findOneAndUpdate(
+    { patient_id: testDataDel.patient_id, data_type: testDataDel.data_type },
+    { $set: { isLatest: true } },
+    { sort: { date_time: -1 } }
+  );
+
+  if (updatedRecord) {
+    console.log('Latest record updated:', updatedRecord);
+  } else {
+    console.log('No records found');
+  }
+
+  // Retrieve the records with isLatest set to true
+  const records = await TestData.find({ patient_id: testDataDel.patient_id, isLatest: true });
+
+  let patientCondition = ""; // Assume initial condition is ""
+
+  // Iterate over the records and compare conditions
+  records.forEach((record) => {
+    console.log(record);
+    if (record.condition === "critical") {
+      patientCondition = "critical";
+    } else if (record.condition === "bad" && patientCondition !== "critical") {
+      patientCondition = "bad";
+    } else if (record.condition === "average" && patientCondition !== "critical" && patientCondition !== "bad") {
+      patientCondition = "average";
+    } else if (record.condition === "fine" && patientCondition !== "critical" && patientCondition !== "bad" && patientCondition !== "average") {
+      patientCondition = "fine";
+    } else if (record.condition === "good" && patientCondition !== "critical" && patientCondition !== "bad" && patientCondition !== "average" && patientCondition !== "fine") {
+      patientCondition = "good";
     }
+  });
+
+  console.log("Patient condition: " + patientCondition);
+
+  // Update the patient's condition in the patientSchema
+  const updatedPatient = await PatientsModel.findOneAndUpdate(
+    { _id: testDataDel.patient_id },
+    { condition: patientCondition },
+    { new: true }
+  );
+
+  console.log("Patient condition updated successfully: " + updatedPatient.condition);
+
+  res.send(200, "Deleted test data with id: " + id)
+  } catch (error) {
+  console.error(error);
+  res.send(500,'Internal Server Error');
+  }
   }
   deleteDoc(req.params.id)
 })
