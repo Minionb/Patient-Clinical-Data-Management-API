@@ -7,6 +7,7 @@ const dataSchema = new mongoose.Schema({
     data_type: String,
     reading_value: String,
     condition: String,
+    isLatest: Boolean,
 });
 
 // Compiles the schema into a model, opening (or creating, if
