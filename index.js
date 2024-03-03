@@ -158,7 +158,7 @@ server.post('/patients', function (req, res, next) {
         department: req.body.department,
         doctor: req.body.doctor,
         additional_notes: req.body.additional_notes,
-        condition: "",
+        condition: "no records",
     })
 
     // Create the patient and save to db
@@ -375,7 +375,7 @@ server.post('/patients/testdata', function (req, res, next) {
       })
   })
   .then((records) => {
-    let patientCondition = ""; // Assume initial condition is ""
+    let patientCondition = "no records"; // Assume initial condition is ""
 
     // Iterate over the records and compare conditions
     records.forEach((record) => {
@@ -570,7 +570,7 @@ server.patch('/patients/testdata/:id', function(req, res, next) {
             })
         })
         .then((records) => {
-          let patientCondition = ""; // Assume initial condition is ""
+          let patientCondition = "no records"; // Assume initial condition is ""
       
           // Iterate over the records and compare conditions
           records.forEach((record) => {
@@ -647,7 +647,7 @@ server.del('/patients/testdata/:id', function(req, res, next) {
   // Retrieve the records with isLatest set to true
   const records = await TestData.find({ patient_id: testDataDel.patient_id, isLatest: true });
 
-  let patientCondition = ""; // Assume initial condition is ""
+  let patientCondition = "no records"; // Assume initial condition is ""
 
   // Iterate over the records and compare conditions
   records.forEach((record) => {
